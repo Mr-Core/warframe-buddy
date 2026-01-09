@@ -1,5 +1,15 @@
-_indexing_demo_tests/_no-index_vs_index.py
-_indexing_demo_tests/_test_indexing_speed.py
-_testing/_search_explained.py
-_testing/_test_sorties.py
-_testing/_testing.py
+# Python cache
+__pycache__/
+
+# Local testing folders
+_indexing_demo_tests/
+_testing/
+
+# Data files
+data/
+
+# List of available/created parsers
+_parsers.txt
+
+# IDE
+.vscode/
