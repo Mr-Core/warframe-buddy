@@ -9,6 +9,6 @@ DEVELOPMENT_MODE = False
 
 # File paths
 FETCH_URL = 'https://www.warframe.com/droptables'
-HTML_FILE = 'dev_beta/data/Warframe_PC_Drops.html'
-PARSED_DATA_FILE = 'dev_beta/data/warframe_drops_parsed.json'
-INDEXED_DATA_FILE = 'dev_beta/data/warframe_drops_indexed.json'
+HTML_FILE = 'warframe_buddy/data/Warframe_PC_Drops.html'
+PARSED_DATA_FILE = 'warframe_buddy/data/warframe_drops_parsed.json'
+INDEXED_DATA_FILE = 'warframe_buddy/data/warframe_drops_indexed.json'
