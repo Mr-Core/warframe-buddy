@@ -11,6 +11,10 @@ def clear_screen():
 def main():
     clear_screen()
     
+    from dependencies import check_dependencies
+    if not check_dependencies():
+        sys.exit(1)
+    
     print('=' * 60)
     print('WARFRAME DROP SEARCH ENGINE')
     print('=' * 60)
@@ -87,11 +91,18 @@ def main():
         # Create search engine with fresh data
         print('\nCreating search indexes...')
         search_engine = WarframeSearchEngine()
-        search_engine.create_indexes(all_drops)
+        search_engine.create_indexes_from_drops(all_drops)
         
         # Always save indexes in Mode 1
         search_engine.save_indexes()
         print('✓ Indexes saved for future searches')
+        
+        # Show index status
+        status = search_engine.get_index_status()
+        print(f'\nIndex Status:')
+        print(f'  - Items indexed: {status['total_items']}')
+        print(f'  - Rebuilt at: {status['last_rebuild'] or 'Just now'}')
+        
         input('\nPress any key to continue...')
     
     elif mode == '2':
