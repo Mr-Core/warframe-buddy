@@ -1,20 +1,27 @@
-# search_engine.py
 import json
 from datetime import datetime
 from collections import defaultdict
 from config import INDEXED_DATA_FILE, PARSED_DATA_FILE
 
+
 class WarframeSearchEngine:
-    """Specialized search engine for Warframe drop data"""
+    """Production-ready search engine with rebuild capability"""
     
     def __init__(self):
+        """Initialize empty - data loaded separately"""
         self.search_indexes = {}
+        self.last_rebuild = None
     
-    # ==== INDEXING ====
+    # ==== INDEX MANAGEMENT ====
     
-    def create_indexes(self, all_drops):
-        """Create optimized indexes"""
-        print('Creating search indexes...')
+    def create_indexes_from_drops(self, all_drops):
+        """
+        Create indexes from drop data (used by orchestrator after parsing)
+        
+        Args:
+            all_drops: List of drop dictionaries from parser
+        """
+        print('Creating search indexes from parsed data...')
         
         # Reset indexes
         self.search_indexes = {
@@ -24,7 +31,12 @@ class WarframeSearchEngine:
             'item_sorties': defaultdict(list),
             'mission_planets': defaultdict(list),
             'relic_tiers': defaultdict(list),
-            'item_lowercase': {},  # NEW: For case-insensitive lookup
+            'item_lowercase': {},
+            'metadata': {
+                'total_drops': len(all_drops),
+                'created_at': datetime.now().isoformat(),
+                'source': 'parsed_data'
+            }
         }
         
         # Build all indexes in one pass
@@ -59,11 +71,44 @@ class WarframeSearchEngine:
             elif source_type == 'Sorties':
                 self.search_indexes['item_sorties'][item].append(drop)
         
+        self.last_rebuild = datetime.now()
+        
         print(f'✓ Indexed {len(all_drops)} drops')
         print(f'  - Unique items: {len(self.search_indexes['item_sources'])}')
     
+    def rebuild_from_parsed_file(self):
+        """
+        Rebuild indexes from saved JSON file
+        Used by service for daily updates
+        """
+        print('Rebuilding indexes from parsed data file...')
+        
+        try:
+            with open(PARSED_DATA_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            drops = data['drops']
+            self.create_indexes_from_drops(drops)
+            self.save_indexes()
+            print('✓ Indexes rebuilt successfully')
+            return True
+            
+        except FileNotFoundError:
+            print(f'✗ Parsed data file not found: {PARSED_DATA_FILE}')
+            return False
+        except json.JSONDecodeError as e:
+            print(f'✗ Invalid JSON in parsed data: {e}')
+            return False
+        except KeyError:
+            print('✗ Invalid parsed data format')
+            return False
+    
     def save_indexes(self):
-        """Save indexes to file"""
+        """Save current indexes to file"""
+        if not self.search_indexes:
+            print('✗ No indexes to save')
+            return False
+        
         serializable_indexes = {}
         for index_name, index_data in self.search_indexes.items():
             if isinstance(index_data, defaultdict):
@@ -73,37 +118,70 @@ class WarframeSearchEngine:
         
         data = {
             'created_at': datetime.now().isoformat(),
+            'last_rebuild': self.last_rebuild.isoformat() if self.last_rebuild else None,
             'indexes': serializable_indexes
         }
         
-        with open(INDEXED_DATA_FILE, 'w') as f:
-            json.dump(data, f, indent=2)
-        
-        print(f'✓ Saved indexes to {INDEXED_DATA_FILE}')
+        try:
+            with open(INDEXED_DATA_FILE, 'w') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            
+            print(f'✓ Saved indexes to {INDEXED_DATA_FILE}')
+            return True
+            
+        except IOError as e:
+            print(f'✗ Failed to save indexes: {e}')
+            return False
     
     def load_indexes(self):
         """Load indexes from file"""
-        with open(INDEXED_DATA_FILE, 'r') as f:
-            data = json.load(f)
-        
-        # Convert back to defaultdict for lists, keep dict for others
-        for index_name, index_data in data['indexes'].items():
-            if index_name in ['item_sources', 'item_missions', 'item_relics', 
-                            'item_sorties', 'mission_planets', 'relic_tiers']:
-                self.search_indexes[index_name] = defaultdict(list, index_data)
-            else:
-                self.search_indexes[index_name] = index_data
-        
-        print(f'✓ Loaded indexes (created {data['created_at']})')
-        print(f'  - Unique items: {len(self.search_indexes['item_sources'])}')
+        try:
+            with open(INDEXED_DATA_FILE, 'r') as f:
+                data = json.load(f)
+            
+            # Convert back to defaultdict for lists, keep dict for others
+            for index_name, index_data in data['indexes'].items():
+                if index_name in ['item_sources', 'item_missions', 'item_relics', 
+                                'item_sorties', 'mission_planets', 'relic_tiers']:
+                    self.search_indexes[index_name] = defaultdict(list, index_data)
+                else:
+                    self.search_indexes[index_name] = index_data
+            
+            if 'last_rebuild' in data and data['last_rebuild']:
+                self.last_rebuild = datetime.fromisoformat(data['last_rebuild'])
+            
+            print(f'✓ Loaded indexes (created {data['created_at']})')
+            print(f'  - Unique items: {len(self.search_indexes['item_sources'])}')
+            return True
+            
+        except FileNotFoundError:
+            print(f'✗ Index file not found: {INDEXED_DATA_FILE}')
+            return False
+        except json.JSONDecodeError as e:
+            print(f'✗ Invalid JSON in index file: {e}')
+            return False
     
-    # ==== SEARCH ====
+    def get_index_status(self):
+        """Get current index status"""
+        if not self.search_indexes:
+            return {
+                'loaded': False,
+                'total_items': 0,
+                'last_rebuild': None,
+                'index_types': []
+            }
+        
+        return {
+            'loaded': True,
+            'total_items': len(self.search_indexes.get('item_sources', {})),
+            'last_rebuild': self.last_rebuild.isoformat() if self.last_rebuild else None,
+            'index_types': list(self.search_indexes.keys())
+        }
+    
+    # ==== SEARCH METHODS (unchanged from your working code) ====
     
     def search_item(self, item_name, source_type=None, **filters):
-        """
-        Search for exact item name
-        For case-insensitive/partial search, use find_matching_items() first
-        """
+        """Search for exact item name"""
         if not self.search_indexes:
             raise ValueError('No indexes loaded.')
         
