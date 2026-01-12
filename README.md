@@ -28,7 +28,8 @@ A Python-based tool for parsing, validating, and searching Warframe drop tables 
 
 ```
 warframe-buddy/
-├── config.py              # Configuration (development/production mode)
+├── data/                 # Application data and cached resources
+├── config.py             # Configuration (development/production mode)
 ├── main.py               # Main entry point with dual-mode interface
 ├── orchestrator.py       # Coordinates parsing and validation
 ├── search_engine.py      # Optimized indexing and search
@@ -94,10 +95,11 @@ Results:
 - **Data Validation**: Comprehensive error checking and reporting
 
 ## Roadmap
-- [ ] Scheduled daily data updates with intelligent caching
+- [x] Implement a service manager for running the program as a background service
+- [x] Add scheduled daily data updates with intelligent caching
 - [ ] Complete parser suite (enemies, bounties, syndicates, mods, etc.)
-- [ ] Flask web interface
-- [ ] REST API endpoints
+- [ ] Add Flask web interface
+- [ ] Add Telegram bot integration
 - [ ] Docker containerization
 - [ ] User favorites and history
 
