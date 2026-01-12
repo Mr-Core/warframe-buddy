@@ -8,6 +8,9 @@ _testing/
 # Data files
 data/
 
+# Old and obsolete code
+_dev_alpha/
+
 # List of available/created parsers
 _parsers.txt
 
