@@ -28,18 +28,38 @@ A Python-based tool for parsing, validating, and searching Warframe drop tables 
 
 ```
 warframe-buddy/
-├── data/                 # Application data and cached resources
-├── config.py             # Configuration (development/production mode)
-├── main.py               # Main entry point with dual-mode interface
-├── orchestrator.py       # Coordinates parsing and validation
-├── search_engine.py      # Optimized indexing and search
-├── base_parser.py        # Shared parsing utilities
-├── mission_parser.py     # Mission drop table parser
-├── relic_parser.py       # Relic drop table parser
-├── sortie_parser.py      # Sortie drop table parser
-├── fetch_data.py         # Web scraping module
-├── .gitignore
-└── README.md
+├── main.py
+├── config.py
+├── orchestrator.py
+├── search_engine.py
+│
+├── interfaces/
+│   ├── __init__.py
+│   └── cli.py
+│
+├── parsers/
+│   ├── __init__.py
+│   ├── base_parser.py
+│   ├── mission_parser.py
+│   ├── relic_parser.py
+│   ├── sortie_parser.py
+│   └── bounty_parser.py
+│
+├── services/
+│   ├── __init__.py
+│   ├── fetch_data.py
+│   └── service_manager.py
+│
+├── utils/
+│   ├── __init__.py
+│   ├── dependencies.py
+│   └── helpers.py
+│
+├── data/                     # Generated data files
+│
+└── requirements.txt
+README.md
+.gitignore
 ```
 
 ## Data Flow
