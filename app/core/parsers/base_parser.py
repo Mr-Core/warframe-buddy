@@ -224,6 +224,18 @@ class BaseDropParser:
                         'reason': 'Missing sortie mission name'
                     }
                     errors.append(error)
+            
+            if drop['source_type'] == 'Bounties':
+                if drop['mission_name'] is None:
+                    counters['missing_bounty_mission_name'] = counters.get('missing_bounty_mission_name', 0) + 1
+                    # Hard error, create errors report
+                    error = {
+                        'index': index,
+                        'item': drop['item'],
+                        'source_type': drop['source_type'],
+                        'reason': 'Missing bounty mission name'
+                    }
+                    errors.append(error)
         
         for error in errors:
             error_rows.add(error['index'])

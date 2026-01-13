@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import json
 from datetime import datetime
 from collections import Counter
-from config import HTML_FILE, PARSED_DATA_FILE
+from app.config import HTML_FILE, PARSED_DATA_FILE
 
 
 class DropOrchestrator:
@@ -13,10 +13,12 @@ class DropOrchestrator:
         from mission_parser import MissionDropParser
         from relic_parser import RelicDropParser
         from sortie_parser import SortieDropParser
+        from bounty_parser import ZarimanBountyDropParser
         
         self.mission_parser = MissionDropParser(self.soup)
         self.relic_parser = RelicDropParser(self.soup)
         self.sortie_parser = SortieDropParser(self.soup)
+        self.zariman_bounty_parser = ZarimanBountyDropParser(self.soup)
         
         self.all_drops = []
         self.parsed_at = datetime.now()
@@ -25,6 +27,7 @@ class DropOrchestrator:
         self.mission_report = None
         self.relic_report = None
         self.sortie_report = None
+        self.zariman_bounty_report = None
     
     def load_html(self, file_path):
         """Load HTML file"""
@@ -47,19 +50,26 @@ class DropOrchestrator:
         print('Parsing sorties...')
         sortie_drops, self.sortie_report = self.sortie_parser.parse()
         
-        self.all_drops = mission_drops + relic_drops + sortie_drops
+        print('Parsing bounties...')
+        print('  - Zariman bounty...')
+        zariman_bounty_drops, self.zariman_bounty_report = self.zariman_bounty_parser.parse()
         
-        self._print_parse_summary(mission_drops, relic_drops, sortie_drops)
+        self.all_drops = mission_drops + relic_drops + sortie_drops + zariman_bounty_drops
+        
+        self._print_parse_summary(mission_drops, relic_drops, sortie_drops, zariman_bounty_drops)
         
         return self.all_drops
     
-    def _print_parse_summary(self, mission_drops, relic_drops, sortie_drops):
+    def _print_parse_summary(self, mission_drops, relic_drops, sortie_drops, zariman_bounty_drops):
         """Print parsing summary"""
+        total_drops_len = len(mission_drops) + len(relic_drops) + len(sortie_drops) + len(zariman_bounty_drops)
+        
         print(f'\nParse Complete:')
         print(f'   Missions: {len(mission_drops)} drops')
         print(f'   Relics: {len(relic_drops)} drops')
         print(f'   Sorties: {len(sortie_drops)} drops')
-        print(f'   Total: {len(mission_drops) + len(relic_drops) + len(sortie_drops)} drops')
+        print(f'   Zariman bounties: {len(zariman_bounty_drops)} drops')
+        print(f'   Total: {total_drops_len} drops')
     
     def print_validation_summary(self):
         """
@@ -89,6 +99,7 @@ class DropOrchestrator:
         reports['missions'] = self.mission_report
         reports['relics'] = self.relic_report
         reports['sorties'] = self.sortie_report
+        reports['zariman_bounty'] = self.zariman_bounty_report
         
         # Calculate overall stats based on ACTUAL data being used
         total_drops = len(self.all_drops)
@@ -108,6 +119,10 @@ class DropOrchestrator:
         if self.sortie_report:
             all_errors.extend(self.sortie_report.get('errors', []))
             all_warnings.extend(self.sortie_report.get('warnings', []))
+        
+        if self.zariman_bounty_report:
+            all_errors.extend(self.zariman_bounty_report.get('errors', []))
+            all_warnings.extend(self.zariman_bounty_report.get('warnings', []))
         
         # Group issues by type for easy fixing
         error_types = Counter(e['reason'] for e in all_errors)
@@ -158,6 +173,14 @@ class DropOrchestrator:
                 print(f'  Row {error['index']} -> Reason: {error['reason']} - Item: {error['item']}')
             if len(report['sorties']['errors']) > max_errors:
                 print(f'  ... and {len(report['sorties']['errors']) - max_errors} more')
+        
+        # Show zariman bounty errors
+        if report['zariman_bounty'] and report['zariman_bounty']['errors']:
+            print('\nZARIMAN BOUNTY ERRORS:')
+            for error in report['zariman_bounty']['errors'][:max_errors]:
+                print(f'  Row {error['index']} -> Reason: {error['reason']} - Item: {error['item']}')
+            if len(report['zariman_bounty']['errors']) > max_errors:
+                print(f'  ... and {len(report['zariman_bounty']['errors']) - max_errors} more')
         
         # Show warnings summary
         total_warnings = report['overall']['warning_count']

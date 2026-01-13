@@ -1,5 +1,5 @@
 import os, sys
-from config import DEVELOPMENT_MODE
+from app.config import DEVELOPMENT_MODE
 from orchestrator import DropOrchestrator
 from search_engine import WarframeSearchEngine
 
@@ -223,8 +223,8 @@ def interactive_search(search_engine):
             
             # Apply source type filter if needed
             if search_results:
-                source_type = input('Filter by source (Missions/Relics/Sorties, or Enter for all): ').strip().lower()
-                if source_type in ['missions', 'relics', 'sorties']:
+                source_type = input('Filter by source (Missions/Relics/Sorties/Bounties, or Enter for all): ').strip().lower()
+                if source_type in ['missions', 'relics', 'sorties', 'bounties']:
                     # Convert to proper case
                     source_type = source_type.capitalize()
                     search_results = [d for d in search_results 
@@ -316,6 +316,8 @@ def display_results(results, item_name, filter):
                 source = f'Relics\n     Tier: {drop.get('relic_tier', '?')}\n     Name: {drop.get('relic_name', '?')}'
             elif drop['source_type'] == 'Sorties':
                 source = drop.get('mission_name', 'Sortie')
+            elif drop['source_type'] == 'Bounties':
+                source = f'Bounties\n     Planet: {drop.get('planet_name', '?')}\n     Mission: {drop.get('mission_name', '?')}'
             else:
                 source = 'Unknown'
             
@@ -329,6 +331,8 @@ def display_results(results, item_name, filter):
                     print(f'     Rotation: {drop['rotation']}')
             if drop['source_type'] == 'Relics' and drop.get('relic_refinement'):
                 print(f'     Refinement: {drop['relic_refinement']}')
+            if drop['source_type'] == 'Bounties':
+                print(f'     Rotation: {drop['rotation']}')
             
             print(f'     Chance: {chance:.1%} ({rarity})')
             
@@ -366,22 +370,34 @@ def display_summary(summary):
         print(f'Best source: {best['source_type']}')
         
         if best['source_type'] == 'Missions':
-            print(f'   Location: {best.get('planet_name')}/{best.get('mission_name')}')
+            if best.get('rotation'):
+                print(f'   Location: {best.get('planet_name')}/{best.get('mission_name')} - Rotation: {best.get('rotation')}')
+            else:
+                print(f'   Location: {best.get('planet_name')}/{best.get('mission_name')}')
+        
         elif best['source_type'] == 'Relics':
             print(f'      Relic: {best.get('relic_tier')} {best.get('relic_name')} {best.get('relic_refinement')}')
+        
+        elif best['source_type'] == 'Bounties':
+            print(f'   Location: {best.get('planet_name')}/{best.get('mission_name')}/{best.get('rotation')}')
+    
+    print('\nBreakdown legend: Planet / Mission name / Rotation -> Drop chance')
     
     # Breakdown
     if summary['missions']:
         print(f'\nMissions ({len(summary['missions'])} sources):')
         for mission in summary['missions'][:10]:
-            print(f'  • {mission['planet']}/{mission['mission']}: {mission['chance']:.1%}')
+            if 'rotation' in mission:
+                print(f'  • {mission['planet']} / {mission['mission']} / {mission['rotation']} -> {mission['chance']:.1%}')
+            else:
+                print(f'  • {mission['planet']} / {mission['mission']} -> {mission['chance']:.1%}')
         if len(summary['missions']) > 10:
             print(f'  ... and {len(summary['missions']) - 10} more')
     
     if summary['relics']:
         print(f'\nRelics ({len(summary['relics'])} sources):')
         for relic in summary['relics'][:10]:
-            print(f'  • {relic['tier']} {relic['name']} {relic['refinement']}: {relic['chance']:.1%}')
+            print(f'  • {relic['tier']} {relic['name']} {relic['refinement']} -> {relic['chance']:.1%}')
         if len(summary['relics']) > 10:
             print(f'  ... and {len(summary['relics']) - 10} more')
     
@@ -389,6 +405,13 @@ def display_summary(summary):
         print(f'\nSorties ({len(summary['sorties'])} sources)')
         for sortie in summary['sorties'][:3]:
             print(f'  • Chance: {sortie['chance']:.1%}')
+    
+    if summary['bounties']:
+        print(f'\nBounties ({len(summary['bounties'])} sources):')
+        for bounty in summary['bounties'][:10]:
+            print(f'  • {bounty['planet']} / {bounty['mission']} / {bounty['rotation']} -> {bounty['chance']:.1%}')
+        if len(summary['bounties']) > 10:
+            print(f'  ... and {len(summary['bounties']) - 10} more')
     
     print()
     print('-' * 80)

@@ -1,7 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
-from config import FETCH_URL, HTML_FILE
+from app.config import FETCH_URL, HTML_FILE
 from pathlib import Path
+
 
 def fetch_data():
     """Fetch latest Warframe drop data"""

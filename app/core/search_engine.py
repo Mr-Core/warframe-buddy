@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from collections import defaultdict
-from config import INDEXED_DATA_FILE, PARSED_DATA_FILE
+from app.config import INDEXED_DATA_FILE, PARSED_DATA_FILE
 
 
 class WarframeSearchEngine:
@@ -29,8 +29,10 @@ class WarframeSearchEngine:
             'item_missions': defaultdict(list),
             'item_relics': defaultdict(list),
             'item_sorties': defaultdict(list),
+            'item_bounties': defaultdict(list),
             'mission_planets': defaultdict(list),
             'relic_tiers': defaultdict(list),
+            'bountie_planets': defaultdict(list),
             'item_lowercase': {},
             'metadata': {
                 'total_drops': len(all_drops),
@@ -70,6 +72,10 @@ class WarframeSearchEngine:
             
             elif source_type == 'Sorties':
                 self.search_indexes['item_sorties'][item].append(drop)
+            
+            elif source_type == 'Bounties':
+                self.search_indexes['item_bounties'][item].append(drop)
+
         
         self.last_rebuild = datetime.now()
         
@@ -178,7 +184,7 @@ class WarframeSearchEngine:
             'index_types': list(self.search_indexes.keys())
         }
     
-    # ==== SEARCH METHODS (unchanged from your working code) ====
+    # ==== SEARCH METHODS ====
     
     def search_item(self, item_name, source_type=None, **filters):
         """Search for exact item name"""
@@ -220,6 +226,14 @@ class WarframeSearchEngine:
         elif source_type == 'sorties':
             results = self.search_indexes['item_sorties'].get(item_name, [])
         
+        elif source_type == 'bounties':
+            results = self.search_indexes['item_bounties'].get(item_name, [])
+            
+            planet = filters.get('planet')
+            if planet:
+                key = f'{item_name}::{planet}'
+                results = self.search_indexes['bountie_planets'].get(key, [])
+        
         else:  # Search everywhere
             results = self.search_indexes['item_sources'].get(item_name, [])
         
@@ -259,6 +273,7 @@ class WarframeSearchEngine:
             'missions': [],
             'relics': [],
             'sorties': [],
+            'bounties': [],
             'best_chance': 0,
             'best_source': None
         }
@@ -271,12 +286,21 @@ class WarframeSearchEngine:
         
         for drop in all_sources:
             if drop['source_type'] == 'Missions':
-                summary['missions'].append({
-                    'planet': drop.get('planet_name'),
-                    'mission': drop.get('mission_name'),
-                    'chance': drop.get('chance'),
-                    'rarity': drop.get('rarity')
-                })
+                if 'rotation' in drop:
+                    summary['missions'].append({
+                        'planet': drop.get('planet_name'),
+                        'mission': drop.get('mission_name'),
+                        'chance': drop.get('chance'),
+                        'rarity': drop.get('rarity'),
+                        'rotation': drop.get('rotation')
+                    })
+                else:
+                    summary['missions'].append({
+                        'planet': drop.get('planet_name'),
+                        'mission': drop.get('mission_name'),
+                        'chance': drop.get('chance'),
+                        'rarity': drop.get('rarity')
+                    })
             elif drop['source_type'] == 'Relics':
                 summary['relics'].append({
                     'tier': drop.get('relic_tier'),
@@ -290,6 +314,14 @@ class WarframeSearchEngine:
                     'chance': drop.get('chance'),
                     'rarity': drop.get('rarity')
                 })
+            elif drop['source_type'] == 'Bounties':
+                summary['bounties'].append({
+                    'planet': drop.get('planet_name'),
+                    'mission': drop.get('mission_name'),
+                    'chance': drop.get('chance'),
+                    'rarity': drop.get('rarity'),
+                    'rotation': drop.get('rotation')
+                })
             
             if drop.get('chance', 0) > summary['best_chance']:
                 summary['best_chance'] = drop.get('chance', 0)
@@ -299,5 +331,6 @@ class WarframeSearchEngine:
         summary_sorted['missions'].sort(key=lambda x: x.get('chance', 0), reverse=True)
         summary_sorted['relics'].sort(key=lambda x: x.get('chance', 0), reverse=True)
         summary_sorted['sorties'].sort(key=lambda x: x.get('chance', 0), reverse=True)
+        summary_sorted['bounties'].sort(key=lambda x: x.get('chance', 0), reverse=True)
         
         return summary_sorted
