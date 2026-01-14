@@ -2,41 +2,46 @@ import importlib
 import subprocess
 import sys
 
-
+# Key: What Python tries to import (import X)
+# Value: What pip installs (pip install Y)
 REQUIRED = {
-    'beautifulsoup4': 'bs4',
-    'requests': 'requests',
+    # import_name: pip_package_name
+    'bs4': 'beautifulsoup4',
+    'requests': 'requests', 
     'schedule': 'schedule',
-}
+    'discord': 'discord.py',
+    'dotenv': 'python-dotenv',
+    }
+
 
 def check_dependencies():
     """Check and install missing dependencies"""
     missing = []
     
-    for pkg, import_name in REQUIRED.items():
+    for import_name, pkg_name in REQUIRED.items():
         try:
             importlib.import_module(import_name)
         except ImportError:
-            missing.append(pkg)
-            print(f"✗ {pkg} is missing")
+            missing.append(pkg_name)
+            print(f'✗ {pkg_name} is missing')
     
     if missing:
-        print(f"\nMissing packages: {', '.join(missing)}")
-        install = input("Install missing packages? (y/n): ").lower()
+        print(f'\nMissing packages: {', '.join(missing)}')
+        install = input('Install missing packages? (y/n): ').lower()
         
         if install == 'y':
             for pkg in missing:
-                print(f"Installing {pkg}...")
+                print(f'\nInstalling {pkg}...')
                 try:
                     subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
-                    print(f"✓ {pkg} installed")
+                    print(f'\n✓ {pkg} installed')
                 except subprocess.CalledProcessError:
-                    print(f"✗ Failed to install {pkg}")
+                    print(f'✗ Failed to install {pkg}')
                     return False
             input('\nPress any key to continue...')
             return True
         else:
-            print("Please install manually: pip install -r requirements.txt")
+            print('Please install manually: pip install -r requirements.txt')
             return False
     
     return True

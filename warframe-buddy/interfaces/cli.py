@@ -22,8 +22,9 @@ def cli():
     print('\nAvailable modes:')
     print('1. Fresh start - Parse, index, save everything')
     print('2. Search only - Load indexes and search')
+    print('3. Abort - Quit the program')
     
-    mode = input('\nSelect mode (1 or 2): ').strip()
+    mode = input('\nSelect mode: ').strip()
     
     error_trigger = False
     search_engine = None
@@ -37,13 +38,11 @@ def cli():
         print('=' * 60)
         
         if not DEVELOPMENT_MODE:
-            # Production: Ask to fetch new data
+            # Production: Fetch new data
             from services.fetch_data import fetch_data
-            fetch_new = input('\nFetch new data from web? (y/n): ').lower()
-            if fetch_new == 'y':
-                print('\nFetching latest data...')
-                fetch_data()
-                print('✓ Data fetched successfully')
+            print('\nFetching latest data...')
+            fetch_data()
+            print('✓ Data fetched successfully')
         else:
             print('DEVELOPMENT MODE IS ACTIVE! Skipping fetching new data.')
         
@@ -117,6 +116,11 @@ def cli():
             print('✗ No index file found!')
             print('\nPlease run Mode 1 first to create indexes.')
             sys.exit(1)
+    
+    elif mode == '3':
+        clear_screen()
+        print('\nGoodbye!')
+        sys.exit(1)
     
     else:
         clear_screen()
