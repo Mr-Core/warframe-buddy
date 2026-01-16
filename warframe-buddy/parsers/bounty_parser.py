@@ -6,7 +6,7 @@ class CetusBountyDropParser(BaseDropParser):
         super().__init__(soup)
         
         self.cetus_bounty_drops = []
-        self.current_mission_descriptor = None
+        self.current_mission_type = None
         self.current_mission_rotation = None
         self.current_mission_stage = None
     
@@ -30,7 +30,7 @@ class CetusBountyDropParser(BaseDropParser):
                 
                 # ---- Mission descriptor header ----
                 if lowered.startswith('level'):
-                    self.current_mission_descriptor = self.normalize_text(text)
+                    self.current_mission_type = self.normalize_text(text)
                     continue
                 
                 # ---- Rotation header ----
@@ -59,7 +59,7 @@ class CetusBountyDropParser(BaseDropParser):
                     'source_type': source_type,
                     'planet_name': 'Earth',
                     'mission_name': 'Cetus',
-                    'mission_descriptor': self.current_mission_descriptor,
+                    'mission_type': self.current_mission_type,
                     'rarity': rarity,
                     'chance': chance_number,
                     'rotation': self.current_mission_rotation,
@@ -79,7 +79,7 @@ class ZarimanBountyDropParser(BaseDropParser):
         super().__init__(soup)
         
         self.zariman_bounty_drops = []
-        self.current_mission_descriptor = None
+        self.current_mission_type = None
 
     def parse(self):
         source_type, zariman_bounty_table = self._parse_header('zarimanRewards')
@@ -98,7 +98,7 @@ class ZarimanBountyDropParser(BaseDropParser):
             if th_cells:
                 text = th_cells[0].text.strip()
                 if 'zariman' in text.lower():
-                    self.current_mission_descriptor = self.normalize_text(text)
+                    self.current_mission_type = self.normalize_text(text)
             
             # -------------------------
             # DROP ROWS
@@ -116,7 +116,7 @@ class ZarimanBountyDropParser(BaseDropParser):
                     'source_type': source_type,
                     'planet_name': 'Zariman',
                     'mission_name': 'Chrysalith',
-                    'mission_descriptor': self.current_mission_descriptor,
+                    'mission_type': self.current_mission_type,
                     'rarity': rarity,
                     'chance': chance_number,
                     'rotation': 'Final stage'

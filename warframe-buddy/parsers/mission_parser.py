@@ -12,7 +12,7 @@ class MissionDropParser(BaseDropParser):
         self.current_mission_mode = None
         self.current_planet_name = None
         self.current_mission_name = None
-        self.current_mission_descriptor = None
+        self.current_mission_type = None
         self.current_mission_rotation = None
         
     def parse(self):
@@ -47,8 +47,8 @@ class MissionDropParser(BaseDropParser):
                         mission_name = mission_part.split(')', 1)[1].split('(', 1)[0].strip()
                         self.current_mission_name = self.normalize_text(mission_name)
                         
-                        mission_descriptor = mission_part.rsplit('(', 1)[1].replace(')', '').strip()
-                        self.current_mission_descriptor = self.normalize_text(mission_descriptor)
+                        mission_type = mission_part.rsplit('(', 1)[1].replace(')', '').strip()
+                        self.current_mission_type = self.normalize_text(mission_type)
                     else:
                         self.current_planet_name = None
                     
@@ -75,7 +75,7 @@ class MissionDropParser(BaseDropParser):
                     left = left.strip()
                     right = right.replace(')', '').strip()
                     
-                    self.current_mission_descriptor = self.normalize_text(right)
+                    self.current_mission_type = self.normalize_text(right)
                     
                     if '/' in left:
                         planet_part, node_part = left.split('/', 1)
@@ -90,12 +90,12 @@ class MissionDropParser(BaseDropParser):
                             mission_details = mission_details.strip()
                             
                             # Combine with descriptor if both exist
-                            if mission_details and self.current_mission_descriptor:
-                                self.current_mission_descriptor = self.normalize_text(
-                                    f'{mission_details} {self.current_mission_descriptor}'
+                            if mission_details and self.current_mission_type:
+                                self.current_mission_type = self.normalize_text(
+                                    f'{mission_details} {self.current_mission_type}'
                                 )
                             elif mission_details:
-                                self.current_mission_descriptor = self.normalize_text(mission_details)
+                                self.current_mission_type = self.normalize_text(mission_details)
                             # If no mission_details, descriptor stays as is (e.g., "Normal")
                         else:
                             self.current_mission_name = self.normalize_text(node_part.strip())
@@ -110,11 +110,11 @@ class MissionDropParser(BaseDropParser):
                         planet_part, node_part = text.split('/', 1)
                         self.current_planet_name = self.normalize_text(planet_part)
                         self.current_mission_name = self.normalize_text(node_part)
-                        self.current_mission_descriptor = None
+                        self.current_mission_type = None
                     else:
                         self.current_planet_name = None
                         self.current_mission_name = self.normalize_text(text)
-                        self.current_mission_descriptor = None
+                        self.current_mission_type = None
             
             # -------------------------
             # DROP ROWS
@@ -133,7 +133,7 @@ class MissionDropParser(BaseDropParser):
                     'mission_mode': self.current_mission_mode,
                     'planet_name': self.current_planet_name,
                     'mission_name': self.current_mission_name,
-                    'mission_descriptor': self.current_mission_descriptor,
+                    'mission_type': self.current_mission_type,
                     'rarity': rarity,
                     'chance': chance_number
                 }

@@ -289,7 +289,7 @@ class WarframeSearchEngine:
                     summary['missions'].append({
                         'planet': drop.get('planet_name'),
                         'mission': drop.get('mission_name'),
-                        'descriptor': drop.get('mission_descriptor'),
+                        'type': drop.get('mission_type'),
                         'chance': drop.get('chance'),
                         'rarity': drop.get('rarity'),
                         'rotation': drop.get('rotation')
@@ -298,7 +298,7 @@ class WarframeSearchEngine:
                     summary['missions'].append({
                         'planet': drop.get('planet_name'),
                         'mission': drop.get('mission_name'),
-                        'descriptor': drop.get('mission_descriptor'),
+                        'type': drop.get('mission_type'),
                         'chance': drop.get('chance'),
                         'rarity': drop.get('rarity')
                     })
@@ -320,7 +320,7 @@ class WarframeSearchEngine:
                     summary['bounties'].append({
                         'planet': drop.get('planet_name'),
                         'mission': drop.get('mission_name'),
-                        'descriptor': drop.get('mission_descriptor'),
+                        'type': drop.get('mission_type'),
                         'chance': drop.get('chance'),
                         'rarity': drop.get('rarity'),
                         'rotation': drop.get('rotation'),
@@ -330,7 +330,7 @@ class WarframeSearchEngine:
                     summary['bounties'].append({
                         'planet': drop.get('planet_name'),
                         'mission': drop.get('mission_name'),
-                        'descriptor': drop.get('mission_descriptor'),
+                        'type': drop.get('mission_type'),
                         'chance': drop.get('chance'),
                         'rarity': drop.get('rarity'),
                         'rotation': drop.get('rotation')

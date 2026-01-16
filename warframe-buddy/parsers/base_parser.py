@@ -145,7 +145,7 @@ class BaseDropParser:
                     errors.append(error)
                 
                 if drop['mission_name'] is None:
-                    if drop['mission_descriptor'] and 'variant' in drop['mission_descriptor'].lower():
+                    if drop['mission_type'] and 'variant' in drop['mission_type'].lower():
                         pass
                     else:
                         counters['missing_mission_name'] = counters.get('missing_mission_name', 0) + 1
@@ -155,13 +155,13 @@ class BaseDropParser:
                             'item': drop['item'],
                             'mission_mode': drop['mission_mode'],
                             'planet_name': drop['planet_name'],
-                            'mission_descriptor': drop['mission_descriptor'],
+                            'mission_type': drop['mission_type'],
                             'reason': 'Missing mission name'
                         }
                         errors.append(error)
 
-                if drop['mission_descriptor'] is None:
-                    counters['missing_mission_descriptor'] = counters.get('missing_mission_descriptor', 0) + 1
+                if drop['mission_type'] is None:
+                    counters['missing_mission_type'] = counters.get('missing_mission_type', 0) + 1
                     # Hard error, create errors report
                     error = {
                         'index': index,
@@ -178,7 +178,7 @@ class BaseDropParser:
                             'index': index,
                             'item': drop['item'],
                             'reason': 'Missing mission rotation',
-                            'mission_descriptor': drop['mission_descriptor']
+                            'mission_type': drop['mission_type']
                         }
                         errors.append(error)
             
@@ -226,8 +226,8 @@ class BaseDropParser:
                     errors.append(error)
             
             if drop['source_type'] == 'Bounties':
-                if drop['mission_descriptor'] is None:
-                    counters['missing_bounty_mission_descriptor'] = counters.get('missing_bounty_mission_descriptor', 0) + 1
+                if drop['mission_type'] is None:
+                    counters['missing_bounty_mission_type'] = counters.get('missing_bounty_mission_type', 0) + 1
                     # Hard error, create errors report
                     error = {
                         'index': index,
