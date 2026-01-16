@@ -2,7 +2,7 @@ import sys, os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-INTERFACE = 'dbot'
+INTERFACE = 'cli'
 
 def main():
     from utils.dependencies import check_dependencies

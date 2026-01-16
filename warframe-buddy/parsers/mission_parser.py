@@ -40,14 +40,19 @@ class MissionDropParser(BaseDropParser):
                 # ---- Variant missions ----
                 if 'variant' in lowered:
                     if '/' in text:
-                        planet_part = text.split('/', 1)[0]
+                        planet_part, mission_part = text.split('/', 1)
+
                         self.current_planet_name = self.normalize_text(planet_part)
+                        
+                        mission_name = mission_part.split(')', 1)[1].split('(', 1)[0].strip()
+                        self.current_mission_name = self.normalize_text(mission_name)
+                        
+                        mission_descriptor = mission_part.rsplit('(', 1)[1].replace(')', '').strip()
+                        self.current_mission_descriptor = self.normalize_text(mission_descriptor)
                     else:
                         self.current_planet_name = None
                     
                     self.current_mission_mode = 'CONCLAVE'
-                    self.current_mission_name = None
-                    self.current_mission_descriptor = self.normalize_text(text)
                     self.current_mission_rotation = None
                     continue
                 
