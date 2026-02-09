@@ -274,7 +274,7 @@ class WarframeBuddyDiscordBot:
                 response += (
                     f"• Last rebuild: {status_info['last_rebuild'] or 'Unknown'}\n"
                 )
-                response += f"• Loaded: {'Yes' if status_info['loaded'] else 'No'}"
+                response += f"• Indexes loaded: {'Yes' if status_info['loaded'] else 'No'}"
             else:
                 response = f'⚠️ **Search engine not loaded**\nUse "{COMMAND_PREFIX}load" to load indexes'
 
@@ -306,98 +306,31 @@ class WarframeBuddyDiscordBot:
 
         @self.bot.command(name="rebuild")
         async def rebuild(ctx):
-            from services.fetch_data import fetch_data
-            from orchestrator import DropOrchestrator
-
-            await ctx.send("Fetching latest data...")
-            fetch_success, fetch_error = fetch_data()
-
-            if fetch_success:
-                await ctx.send("✓ Data fetched successfully")
-            else:
-                await ctx.send("✗ Error fetching latest data.")
-                if fetch_error:
-                    await ctx.send(f"  ↳ {fetch_error}")
+            from services.rebuild_pipeline import rebuild
+            
+            await ctx.send("Rebuilding pipeline...")
+            
+            rebuild_status = rebuild(print)
+            
+            if not rebuild_status:
+                await ctx.send("✗ Rebuilding failed.")
                 return
-
-            orchestrator = DropOrchestrator()
-
-            # Parse everything
-            await ctx.send("Parsing data...")
-            orchestrator = DropOrchestrator()
-            all_drops, len_all_drops = orchestrator.parse_all()
-
-            # Print parse details
-            await ctx.send(
-                "Parsing completed:\n"
-                f"   Missions: {len_all_drops['mission_drops']} drops\n"
-                f"   Relics: {len_all_drops['relic_drops']} drops\n"
-                f"   Sorties: {len_all_drops['sortie_drops']} drops\n"
-                f"   Cetus bounties: {len_all_drops['cetus_bounty_drops']} drops\n"
-                f"   Orb Vallis bounties: {len_all_drops['solaris_bounty_drops']} drops\n"
-                f"   Cambion Drift bounties: {len_all_drops['deimos_bounty_drops']} drops\n"
-                f"   Zariman bounties: {len_all_drops['zariman_bounty_drops']} drops\n"
-                f"   Albrecht's Laboratories bounties: {len_all_drops['entrati_lab_bounty_drops']} drops\n"
-                f"   Hex bounties: {len_all_drops['hex_bounty_drops']} drops\n"
-                f"   Dynamic Location Rewards: {len_all_drops['transient_drops']} drops\n"
-                f"   Total drops: {len_all_drops['total_drops']} drops"
-            )
-
-            # Generate a validation report
-            report = orchestrator.get_validation_report()
-
-            # Show validation summary
-            overall = report["overall"]
-
-            await ctx.send(
-                f"VALIDATION SUMMARY:\n"
-                f"   Total drops: {overall['total_drops']}\n"
-                f"   Data integrity: {overall['data_integrity']:.1%}\n"
-                f"   Errors: {overall['error_count']}\n"
-                f"   Warnings: {overall['warning_count']}"
-            )
-
-            # Check if validation report contains any errors
-            if (
-                report["overall"]["error_count"] > 0
-                or report["overall"]["warning_count"] > 0
-            ):
-                error_trigger = True
-                await ctx.send("   CRITICAL: Errors found in data!")
-
-            if error_trigger:
-                await ctx.send(
-                    "⚠  Data contains errors and is not safe to use! ⚠\n"
-                    "Run the program in DEVELOPMENT MODE to diagnose the problems.\n"
-                )
+            
+            self.search_engine = WarframeSearchEngine()
+            load_index_success, load_index_response = self.search_engine.load_indexes()
+            
+            if not load_index_success:
+                await ctx.send(load_index_response)
                 return
+            
+            status_info = self.search_engine.get_index_status()
+            
+            response = "✓ Rebuild completed successfully.\n"
+            response += f"• Items indexed: {status_info['total_items']}\n"
+            response += f"• Last rebuild: {status_info['last_rebuild'] or 'Unknown'}\n"
+            response += f"• Indexes loaded: {'Yes' if status_info['loaded'] else 'No'}"
 
-            # Save parsed data to file
-            await ctx.send("Saving parsed data to file...")
-            save_response = orchestrator.save_parsed_data()
-            await ctx.send(save_response)
-
-            # Create search engine with fresh data
-            await ctx.send("Creating search indexes...")
-            search_engine = WarframeSearchEngine()
-            create_indexes_reponse = search_engine.create_indexes_from_drops(all_drops)
-
-            await ctx.send(
-                f"✓ Indexed {len(all_drops)} drops\n" f"{create_indexes_reponse}"
-            )
-
-            # Always save indexes in Mode 1
-            save_indexes_response = search_engine.save_indexes()
-            await ctx.send(save_indexes_response)
-
-            # Show index status
-            status = search_engine.get_index_status()
-
-            await ctx.send(
-                f"Index Status:\n"
-                f"  - Items indexed: {status['total_items']}\n"
-                f"  - Rebuilt at: {status['last_rebuild'] or 'Just now'}"
-            )
+            await ctx.send(response)
 
         @self.bot.command(name="debug")
         async def debug(ctx):
