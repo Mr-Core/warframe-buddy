@@ -6,169 +6,87 @@ from utils.helpers import clear_screen
 
 
 def cli():
-    clear_screen()
-
-    print("=" * 60)
-    print("WARFRAME DROP SEARCH ENGINE")
-    print("=" * 60)
-
-    if DEVELOPMENT_MODE:
-        print("\n[DEVELOPMENT MODE]")
-        print("Will use cached HTML file if available.")
-    else:
-        print("\n[PRODUCTION MODE]")
-        print("Will fetch new data from web.")
-
-    print("\nAvailable modes:")
-    print("1. Fresh start - Parse, index, save everything")
-    print("2. Search only - Load indexes and search")
-    print("3. Abort - Quit the program")
-
-    mode = input("\nSelect mode: ").strip()
-
-    error_trigger = False
-    search_engine = None
-
-    if mode == "1":
-        # MODE 1: Fresh start
+    while True:
         clear_screen()
 
-        print("\n" + "=" * 60)
-        print("FRESH START MODE")
+        print("=" * 60)
+        print("WARFRAME DROP SEARCH ENGINE")
         print("=" * 60)
 
-        if not DEVELOPMENT_MODE:
-            # Production: Fetch new data
-            from services.fetch_data import fetch_data
-
-            print("\nFetching latest data...")
-            fetch_success, fetch_error = fetch_data()
-
-            if fetch_success:
-                print("✓ Data fetched successfully")
-            else:
-                print("✗ Error fetching latest data.")
-                if fetch_error:
-                    print(f"  ↳ {fetch_error}")
-                sys.exit(1)
+        if DEVELOPMENT_MODE:
+            print("\n[DEVELOPMENT MODE]")
+            print("Will use cached HTML file if available.")
         else:
-            print("DEVELOPMENT MODE IS ACTIVE! Skipping fetching new data.")
+            print("\n[PRODUCTION MODE]")
+            print("Will fetch new data from web.")
 
-        # Parse everything
-        print("\nParsing data...")
-        orchestrator = DropOrchestrator()
-        all_drops, len_all_drops = orchestrator.parse_all()
+        print("\nAvailable modes:")
+        print("1. Fresh start - Parse, index, save everything")
+        print("2. Search only - Load indexes and search")
+        print("3. Abort - Quit the program")
 
-        # Print parse details
-        print(f"\nParsing completed:")
-        print(f"   Missions: {len_all_drops['mission_drops']} drops")
-        print(f"   Relics: {len_all_drops['relic_drops']} drops")
-        print(f"   Sorties: {len_all_drops['sortie_drops']} drops")
-        print(f"   Cetus bounties: {len_all_drops['cetus_bounty_drops']} drops")
-        print(f"   Orb Vallis bounties: {len_all_drops['solaris_bounty_drops']} drops")
-        print(
-            f"   Cambion Drift bounties: {len_all_drops['deimos_bounty_drops']} drops"
-        )
-        print(f"   Zariman bounties: {len_all_drops['zariman_bounty_drops']} drops")
-        print(
-            f"   Albrecht's Laboratories bounties: {len_all_drops['entrati_lab_bounty_drops']} drops"
-        )
-        print(f"   Hex bounties: {len_all_drops['hex_bounty_drops']} drops")
-        print(f"   Dynamic Location Rewards: {len_all_drops['transient_drops']} drops")
-        print(f"\n   Total drops: {len_all_drops['total_drops']} drops")
+        mode = input("\nSelect mode: ").strip()
 
-        # Generate a validation report
-        report = orchestrator.get_validation_report()
-
-        # Show validation summary
-        overall = report["overall"]
-
-        print(f"\nVALIDATION SUMMARY:")
-        print(f"   Total drops: {overall['total_drops']}")
-        print(f"   Data integrity: {overall['data_integrity']:.1%}")
-        print(f"   Errors: {overall['error_count']}")
-        print(f"   Warnings: {overall['warning_count']}")
-
-        # Check if validation report contains any errors
-        if (
-            report["overall"]["error_count"] > 0
-            or report["overall"]["warning_count"] > 0
-        ):
-            error_trigger = True
-            print("   CRITICAL: Errors found in data!")
-
-        if error_trigger:
-            if not DEVELOPMENT_MODE:
-                print(
-                    "\n⚠  Data contains errors and is not safe to use! ⚠\n"
-                    "Run the program in DEVELOPMENT MODE to diagnose the problems.\n"
-                )
+        error_trigger = False
+        search_engine = None
+        
+        if mode == "1":
+            # MODE 1: Fetch, parse, index, save to file
+            from services.rebuild_pipeline import rebuild
+            clear_screen()
+            
+            print("\n" + "=" * 60)
+            print("FRESH START MODE")
+            print("=" * 60)
+            
+            rebuild_status = rebuild(print)
+            
+            if not rebuild_status:
                 sys.exit(1)
-            else:
-                # If data has errors and dev mode is on, show detailed validation
-                orchestrator.print_validation_details()
+            
+            search_engine = WarframeSearchEngine()
+            load_index_success, load_index_response = search_engine.load_indexes()
+            
+            if not load_index_success:
+                print(load_index_response)
                 sys.exit(1)
-
-        # Ask to save parsed data
-        save_parsed = input("\nSave parsed data to file? (y/n): ").lower()
-
-        if save_parsed == "y":
-            save_response = orchestrator.save_parsed_data()
-            print(save_response)
-        else:
-            print("\nSkipping saving parsed data to file.")
-
-        # Create search engine with fresh data
-        print("\nCreating search indexes...")
-        search_engine = WarframeSearchEngine()
-        create_indexes_reponse = search_engine.create_indexes_from_drops(all_drops)
-
-        print(f"✓ Indexed {len(all_drops)} drops")
-        print(create_indexes_reponse)
-
-        # Always save indexes in Mode 1
-        save_indexes_response = search_engine.save_indexes()
-        print(save_indexes_response)
-
-        # Show index status
-        status = search_engine.get_index_status()
-        print(f"\nIndex Status:")
-        print(f"  - Items indexed: {status['total_items']}")
-        print(f"  - Rebuilt at: {status['last_rebuild'] or 'Just now'}")
-
-        input("\nPress any key to continue...")
-
-    elif mode == "2":
-        # MODE 2: Search only
-        clear_screen()
-
-        print("\n" + "=" * 60)
-        print("SEARCH ONLY MODE")
-        print("=" * 60)
-
-        print("\nLoading search indexes...")
-        search_engine = WarframeSearchEngine()
-
-        # Load existing indexes
-        load_index_success, load_index_response = search_engine.load_indexes()
-
-        if load_index_success:
-            print(load_index_response)
-            print("\n✓ Indexes loaded successfully")
+            
             input("\nPress any key to continue...")
-        else:
-            print(load_index_response)
+            break
+
+        elif mode == "2":
+            # MODE 2: Search only
+            clear_screen()
+
+            print("\n" + "=" * 60)
+            print("SEARCH ONLY MODE")
+            print("=" * 60)
+
+            print("\nLoading search indexes...")
+            search_engine = WarframeSearchEngine()
+
+            # Load existing indexes
+            load_index_success, load_index_response = search_engine.load_indexes()
+
+            if load_index_success:
+                print(load_index_response)
+                print("\n✓ Indexes loaded successfully")
+                input("\nPress any key to continue...")
+                break
+            else:
+                print(load_index_response)
+                sys.exit(1)
+            
+        elif mode == "3":
+            # MODE 3: Exit
+            clear_screen()
+            print("\nGoodbye!")
             sys.exit(1)
 
-    elif mode == "3":
-        clear_screen()
-        print("\nGoodbye!")
-        sys.exit(1)
-
-    else:
-        clear_screen()
-        print("Invalid mode selected!\n\nExiting.")
-        sys.exit(1)
+        else:
+            clear_screen()
+            print("Invalid mode selected!")
+            input("\nPress any key to continue...")
 
     # Start interactive search
     interactive_search(search_engine)
@@ -176,6 +94,11 @@ def cli():
 
 def interactive_search(search_engine) -> None:
     """Interactive search interface"""
+    if not search_engine or not search_engine.seach_indexes:
+        print("Search engine not initialized.")
+        input("\nPress any key to continue...")
+        return
+    
     while True:
         clear_screen()
 
