@@ -213,7 +213,7 @@ class DropOrchestrator:
         """
         report = self.get_validation_report()
 
-        print("\n" + "=" * 60)
+        print("=" * 60)
         print("DETAILED VALIDATION REPORT")
         print("=" * 60)
 
@@ -353,4 +353,4 @@ class DropOrchestrator:
         with open(PARSED_DATA_FILE, "w") as f:
             json.dump(data, f, indent=2)
 
-        return f'\n✓ Saved {len(self.all_drops)} drops to "{PARSED_DATA_FILE}"'
+        return f'✓ Saved {len(self.all_drops)} drops to "{PARSED_DATA_FILE}"'
