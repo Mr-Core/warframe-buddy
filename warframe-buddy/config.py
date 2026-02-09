@@ -25,3 +25,7 @@ HEALTH_CHECK_TIME = "04:00"
 # Set Discord bot token and command prefix
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 COMMAND_PREFIX = "?"
+
+# Project version
+APP_VERSION = "0.1.0"
+APP_ENV = "dev"
