@@ -15,7 +15,7 @@ class WarframeSearchEngine:
 
     # ==== INDEX MANAGEMENT ====
 
-    def create_indexes_from_drops(self, all_drops) -> str:
+    def create_indexes_from_drops(self, all_drops) -> int:
         """
         Create indexes from drop data (used by orchestrator after parsing)
 
@@ -81,7 +81,7 @@ class WarframeSearchEngine:
 
         self.last_rebuild = datetime.now()
 
-        return f"  - Unique items: {len(self.search_indexes['item_sources'])}"
+        return len(self.search_indexes['item_sources'])
 
     def rebuild_from_parsed_file(self):
         """
@@ -192,7 +192,9 @@ class WarframeSearchEngine:
             "loaded": True,
             "total_items": len(self.search_indexes.get("item_sources", {})),
             "last_rebuild": (
-                self.last_rebuild.isoformat() if self.last_rebuild else None
+                self.last_rebuild.strftime("%Y-%m-%d @ %H:%M")
+                if self.last_rebuild
+                else None
             ),
             "index_types": list(self.search_indexes.keys()),
         }
