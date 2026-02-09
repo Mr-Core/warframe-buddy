@@ -11,7 +11,7 @@ from typing import List, Dict  # Required for Linux deployment
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from search_engine import WarframeSearchEngine
-from config import COMMAND_PREFIX
+from config import DEVELOPMENT_MODE, COMMAND_PREFIX, APP_VERSION, APP_ENV
 from services.warframe_api import WarframeAPI
 
 
@@ -280,6 +280,11 @@ class WarframeBuddyDiscordBot:
 
             await ctx.send(response)
 
+        @self.bot.command(name='version', help="Print current version")
+        async def version(ctx):
+            """Command that prints current project version"""
+            await ctx.send(f"Warframe Buddy {APP_VERSION} ({APP_ENV})")
+        
         @self.bot.command(name="help", help="Show all commands")
         async def custom_help(ctx):
             """Custom help command"""
@@ -339,6 +344,9 @@ class WarframeBuddyDiscordBot:
         @self.bot.event
         async def on_ready():
             """Called when bot connects"""
+            if DEVELOPMENT_MODE:
+                print("⚠️  DEVELOPMENT MODE IS ACTIVE!")
+            
             print(f"✅ Discord bot logged in as {self.bot.user}")
 
             # Set helpful status
